@@ -42,10 +42,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <Link href="/" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all duration-300">
-                <Briefcase className="w-4 h-4 text-white" />
+              <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center transition-all duration-300">
+                <Briefcase className="w-4 h-4 text-primary-foreground" />
               </div>
-              <span className="font-display font-bold text-xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">
+              <span className="font-display font-bold text-xl tracking-tight text-foreground">
                 TechPath
               </span>
             </Link>
@@ -80,7 +80,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                     <Link href="/login" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                       Sign In
                     </Link>
-                    <Link href="/register" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all shadow-md shadow-primary/20 hover:shadow-primary/40">
+                    <Link href="/register" className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-all">
                       Get Started
                     </Link>
                   </>
@@ -113,7 +113,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-white/5"
+                  className="flex items-center gap-3 px-3 py-2 rounded-md text-base font-medium text-muted-foreground hover:text-foreground hover:bg-secondary"
                 >
                   <link.icon className="w-5 h-5" />
                   {link.label}
