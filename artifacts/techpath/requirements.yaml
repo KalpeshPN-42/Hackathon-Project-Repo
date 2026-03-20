@@ -1,0 +1,18 @@
+packages:
+  "framer-motion": "Animations for page transitions and elements"
+  "lucide-react": "Icons for UI"
+  "date-fns": "Date formatting for job postings and applications"
+  "react-hook-form": "Form state management"
+  "@hookform/resolvers": "Zod resolver for forms"
+  "zod": "Schema validation"
+images:
+  - path: "artifacts/techpath/public/images/hero-abstract.png"
+    description: "Dark navy tech abstract background with glowing vibrant blue and indigo geometric lines, soft data nodes, depth of field"
+    aspect_ratio: "16:9"
+  - path: "artifacts/techpath/public/images/platform-preview.png"
+    description: "Abstract glassmorphism UI floating cards on a dark blue background showing glowing dashboard charts and code snippets"
+    aspect_ratio: "16:9"
+notes:
+  - App is wrapped with custom AuthProvider using the @workspace/api-client-react hooks
+  - Using wouter for routing
+  - Aesthetic is forced dark mode via CSS variables for a premium tech feel

@@ -1,22 +1,33 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: TechPath Jobs & Internships API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: profile
+    description: User profile operations
+  - name: jobs
+    description: Job and internship listings
+  - name: applications
+    description: Job applications
+  - name: resume
+    description: Resume generation
+  - name: admin
+    description: Admin operations
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +35,384 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "409":
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /auth/me:
+    get:
+      operationId: getCurrentUser
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /profile:
+    get:
+      operationId: getProfile
+      tags: [profile]
+      summary: Get user profile
+      responses:
+        "200":
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+        "404":
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateProfile
+      tags: [profile]
+      summary: Create or update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ProfileInput"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Profile"
+
+  /jobs:
+    get:
+      operationId: listJobs
+      tags: [jobs]
+      summary: List job listings with filters
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [internship, fulltime, parttime, contract, remote]
+        - name: location
+          in: query
+          schema:
+            type: string
+        - name: techStack
+          in: query
+          schema:
+            type: string
+        - name: minPay
+          in: query
+          schema:
+            type: number
+        - name: maxPay
+          in: query
+          schema:
+            type: number
+        - name: experienceLevel
+          in: query
+          schema:
+            type: string
+            enum: [fresher, junior, mid, senior]
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job listings
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobListResponse"
+    post:
+      operationId: createJob
+      tags: [jobs]
+      summary: Create a job listing (recruiters only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "201":
+          description: Job created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+
+  /jobs/{id}:
+    get:
+      operationId: getJob
+      tags: [jobs]
+      summary: Get a job listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job listing
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    put:
+      operationId: updateJob
+      tags: [jobs]
+      summary: Update a job listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/JobInput"
+      responses:
+        "200":
+          description: Job updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Job"
+    delete:
+      operationId: deleteJob
+      tags: [jobs]
+      summary: Delete a job listing
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Job deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuccessResponse"
+
+  /applications:
+    get:
+      operationId: listApplications
+      tags: [applications]
+      summary: List applications for current user
+      responses:
+        "200":
+          description: Applications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+    post:
+      operationId: createApplication
+      tags: [applications]
+      summary: Apply for a job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationInput"
+      responses:
+        "201":
+          description: Application submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /applications/{id}/status:
+    put:
+      operationId: updateApplicationStatus
+      tags: [applications]
+      summary: Update application status (recruiter/admin)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ApplicationStatusUpdate"
+      responses:
+        "200":
+          description: Status updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Application"
+
+  /resume/generate:
+    post:
+      operationId: generateResume
+      tags: [resume]
+      summary: Generate ATS-friendly resume PDF
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResumeGenerateRequest"
+      responses:
+        "200":
+          description: Resume HTML/data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ResumeResponse"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      responses:
+        "200":
+          description: Users list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /admin/jobs:
+    get:
+      operationId: adminListJobs
+      tags: [admin]
+      summary: List all jobs (admin only)
+      responses:
+        "200":
+          description: Jobs list
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/JobListResponse"
+
+  /recruiter/applications:
+    get:
+      operationId: recruiterListApplications
+      tags: [applications]
+      summary: List applications for recruiter's jobs
+      responses:
+        "200":
+          description: Applications list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Application"
+
 components:
   schemas:
     HealthStatus:
@@ -31,6 +420,465 @@ components:
       properties:
         status:
           type: string
-      required:
-        - status
+      required: [status]
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+      required: [error]
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+      required: [success]
+
+    RegisterRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+        role:
+          type: string
+          enum: [student, recruiter, admin]
+      required: [email, password, name, role]
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required: [email, password]
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required: [user]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [student, recruiter, admin]
+        createdAt:
+          type: string
+          format: date-time
+        profileComplete:
+          type: boolean
+      required: [id, email, name, role, createdAt, profileComplete]
+
+    Profile:
+      type: object
+      properties:
+        id:
+          type: integer
+        userId:
+          type: integer
+        headline:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        linkedinUrl:
+          type: string
+        githubUrl:
+          type: string
+        portfolioUrl:
+          type: string
+        summary:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        education:
+          type: array
+          items:
+            $ref: "#/components/schemas/Education"
+        experience:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experience"
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Certification"
+        languages:
+          type: array
+          items:
+            type: string
+        preferredRoles:
+          type: array
+          items:
+            type: string
+        preferredLocations:
+          type: array
+          items:
+            type: string
+        expectedSalary:
+          type: number
+        availableFrom:
+          type: string
+          format: date
+        openToRemote:
+          type: boolean
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, userId, skills, education, experience, projects, certifications]
+
+    ProfileInput:
+      type: object
+      properties:
+        headline:
+          type: string
+        phone:
+          type: string
+        location:
+          type: string
+        linkedinUrl:
+          type: string
+        githubUrl:
+          type: string
+        portfolioUrl:
+          type: string
+        summary:
+          type: string
+        skills:
+          type: array
+          items:
+            type: string
+        education:
+          type: array
+          items:
+            $ref: "#/components/schemas/Education"
+        experience:
+          type: array
+          items:
+            $ref: "#/components/schemas/Experience"
+        projects:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        certifications:
+          type: array
+          items:
+            $ref: "#/components/schemas/Certification"
+        languages:
+          type: array
+          items:
+            type: string
+        preferredRoles:
+          type: array
+          items:
+            type: string
+        preferredLocations:
+          type: array
+          items:
+            type: string
+        expectedSalary:
+          type: number
+        availableFrom:
+          type: string
+          format: date
+        openToRemote:
+          type: boolean
+      required: [skills, education, experience, projects, certifications]
+
+    Education:
+      type: object
+      properties:
+        institution:
+          type: string
+        degree:
+          type: string
+        field:
+          type: string
+        startYear:
+          type: integer
+        endYear:
+          type: integer
+        gpa:
+          type: string
+        achievements:
+          type: string
+      required: [institution, degree, field, startYear]
+
+    Experience:
+      type: object
+      properties:
+        company:
+          type: string
+        role:
+          type: string
+        location:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+        current:
+          type: boolean
+        description:
+          type: string
+        techStack:
+          type: array
+          items:
+            type: string
+      required: [company, role, startDate]
+
+    Project:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        techStack:
+          type: array
+          items:
+            type: string
+        url:
+          type: string
+        githubUrl:
+          type: string
+        startDate:
+          type: string
+        endDate:
+          type: string
+      required: [name, description]
+
+    Certification:
+      type: object
+      properties:
+        name:
+          type: string
+        issuer:
+          type: string
+        issueDate:
+          type: string
+        expiryDate:
+          type: string
+        credentialUrl:
+          type: string
+      required: [name, issuer]
+
+    Job:
+      type: object
+      properties:
+        id:
+          type: integer
+        recruiterId:
+          type: integer
+        recruiterName:
+          type: string
+        company:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [internship, fulltime, parttime, contract, remote]
+        location:
+          type: string
+        isRemote:
+          type: boolean
+        techStack:
+          type: array
+          items:
+            type: string
+        minPay:
+          type: number
+        maxPay:
+          type: number
+        experienceLevel:
+          type: string
+          enum: [fresher, junior, mid, senior]
+        requirements:
+          type: array
+          items:
+            type: string
+        responsibilities:
+          type: array
+          items:
+            type: string
+        benefits:
+          type: array
+          items:
+            type: string
+        applicationDeadline:
+          type: string
+          format: date
+        openings:
+          type: integer
+        status:
+          type: string
+          enum: [active, closed, draft]
+        applicationsCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, recruiterId, company, title, description, type, location, techStack, experienceLevel, status, createdAt]
+
+    JobInput:
+      type: object
+      properties:
+        company:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        type:
+          type: string
+          enum: [internship, fulltime, parttime, contract, remote]
+        location:
+          type: string
+        isRemote:
+          type: boolean
+        techStack:
+          type: array
+          items:
+            type: string
+        minPay:
+          type: number
+        maxPay:
+          type: number
+        experienceLevel:
+          type: string
+          enum: [fresher, junior, mid, senior]
+        requirements:
+          type: array
+          items:
+            type: string
+        responsibilities:
+          type: array
+          items:
+            type: string
+        benefits:
+          type: array
+          items:
+            type: string
+        applicationDeadline:
+          type: string
+          format: date
+        openings:
+          type: integer
+        status:
+          type: string
+          enum: [active, closed, draft]
+      required: [company, title, description, type, location, techStack, experienceLevel]
+
+    JobListResponse:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: "#/components/schemas/Job"
+        total:
+          type: integer
+        page:
+          type: integer
+        totalPages:
+          type: integer
+      required: [jobs, total, page, totalPages]
+
+    Application:
+      type: object
+      properties:
+        id:
+          type: integer
+        jobId:
+          type: integer
+        userId:
+          type: integer
+        applicantName:
+          type: string
+        applicantEmail:
+          type: string
+        job:
+          $ref: "#/components/schemas/Job"
+        coverLetter:
+          type: string
+        status:
+          type: string
+          enum: [pending, reviewing, shortlisted, rejected, offered]
+        appliedAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      required: [id, jobId, userId, status, appliedAt]
+
+    ApplicationInput:
+      type: object
+      properties:
+        jobId:
+          type: integer
+        coverLetter:
+          type: string
+      required: [jobId]
+
+    ApplicationStatusUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending, reviewing, shortlisted, rejected, offered]
+      required: [status]
+
+    ResumeGenerateRequest:
+      type: object
+      properties:
+        templateId:
+          type: string
+          enum: [modern, classic, minimal, bold]
+        includePhoto:
+          type: boolean
+      required: [templateId]
+
+    ResumeResponse:
+      type: object
+      properties:
+        html:
+          type: string
+        templateId:
+          type: string
+      required: [html, templateId]

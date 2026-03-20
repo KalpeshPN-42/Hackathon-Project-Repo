@@ -2,7 +2,8 @@
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+TechPath — an internship & job suggestion platform for engineering students and tech professionals.
+pnpm workspace monorepo using TypeScript.
 
 ## Stack
 
@@ -10,9 +11,11 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **API framework**: Express 5
+- **Frontend**: React 18 + Vite + Tailwind CSS + shadcn/ui + Wouter (routing) + React Query + Framer Motion
+- **API framework**: Express 5 + express-session
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **Auth**: Session-based auth with bcryptjs
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
@@ -20,77 +23,83 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 
 ```text
 artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
+├── artifacts/
+│   ├── api-server/         # Express API server
+│   └── techpath/           # React + Vite frontend (TechPath)
+├── lib/
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+│   └── src/seed.ts         # Demo data seeder
+└── package.json
 ```
 
-## TypeScript & Composite Projects
+## Features
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+### User Roles
+- **Student/Professional** — Browse jobs, complete profile, apply, generate resume
+- **Recruiter** — Post jobs/internships, manage applications, update candidate status
+- **Admin** — Manage all users and job listings
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+### Pages (Student/Professional)
+- Landing page with hero + feature highlights
+- Login / Register with role selection
+- Multi-step profile setup (7 steps: personal info, education, experience, projects, skills, certifications, preferences)
+- Jobs feed with advanced filters (location, tech stack, type, pay, experience level)
+- Job detail page with apply button
+- My Applications with status tracking
+- ATS Resume Builder with 4 templates (modern, classic, minimal, bold)
 
-## Root Scripts
+### Pages (Recruiter)
+- Recruiter dashboard with stats
+- Post new job form
+- View and manage applications with status updates
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+### Pages (Admin)
+- Admin dashboard
+- All users management
+- All jobs management
 
-## Packages
+## Database Schema
 
-### `artifacts/api-server` (`@workspace/api-server`)
+- `users` — email, passwordHash, name, role (student/recruiter/admin), profileComplete
+- `profiles` — userId, headline, skills (JSONB), education (JSONB), experience (JSONB), projects (JSONB), certifications (JSONB), preferences
+- `jobs` — recruiterId, company, title, description, type, techStack (JSONB), pay range, experienceLevel, status
+- `applications` — jobId, userId, coverLetter, status (pending/reviewing/shortlisted/rejected/offered)
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+## Demo Accounts
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+- Student: `student@example.com` / `password123`
+- Recruiter: `recruiter@techcorp.com` / `password123`
+- Admin: `admin@techpath.com` / `password123`
 
-### `lib/db` (`@workspace/db`)
+## API Endpoints
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+- `POST /api/auth/register` — Register
+- `POST /api/auth/login` — Login
+- `POST /api/auth/logout` — Logout
+- `GET /api/auth/me` — Current user
+- `GET/PUT /api/profile` — Profile management
+- `GET/POST /api/jobs` — List/create jobs
+- `GET/PUT/DELETE /api/jobs/:id` — Job CRUD
+- `GET/POST /api/applications` — Applications
+- `PUT /api/applications/:id/status` — Update status
+- `POST /api/resume/generate` — Generate HTML resume
+- `GET /api/admin/users` — Admin: all users
+- `GET /api/admin/jobs` — Admin: all jobs
+- `GET /api/recruiter/applications` — Recruiter: all applications
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+## Development
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
+```bash
+# Run codegen after API spec changes
+pnpm --filter @workspace/api-spec run codegen
 
-### `lib/api-spec` (`@workspace/api-spec`)
+# Push DB schema changes
+pnpm --filter @workspace/db run push
 
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+# Seed demo data
+pnpm --filter @workspace/scripts run seed
+```
