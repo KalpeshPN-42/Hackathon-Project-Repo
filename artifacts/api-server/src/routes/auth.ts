@@ -11,7 +11,9 @@ const registerSchema = z.object({
   email: z.email(),
   password: z.string().min(8),
   name: z.string().min(1),
-  role: z.enum(["student", "recruiter", "admin"]),
+  role: z.enum(["student", "recruiter"]),
+  companyName: z.string().optional(),
+  companyWebsite: z.string().optional(),
 });
 
 const loginSchema = z.object({
@@ -39,7 +41,16 @@ router.post("/register", async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const [user] = await db.insert(usersTable).values({ email, passwordHash, name, role }).returning();
+
+  const verified = role === "student";
+
+  const [user] = await db.insert(usersTable).values({
+    email,
+    passwordHash,
+    name,
+    role,
+    verified,
+  }).returning();
 
   (req.session as any).userId = user.id;
   res.status(201).json({ user: sanitizeUser(user), message: "Account created" });

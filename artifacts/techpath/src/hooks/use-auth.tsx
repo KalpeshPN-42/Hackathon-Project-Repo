@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect } from "react";
 import { useGetCurrentUser, useLogin, useRegister, useLogout } from "@workspace/api-client-react";
 import type { User, LoginRequest, RegisterRequest } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
@@ -7,8 +7,8 @@ import { useLocation } from "wouter";
 type AuthContextType = {
   user: User | null;
   isLoading: boolean;
-  login: (data: LoginRequest) => Promise<void>;
-  register: (data: RegisterRequest) => Promise<void>;
+  login: (data: LoginRequest) => Promise<User>;
+  register: (data: RegisterRequest) => Promise<User>;
   logout: () => Promise<void>;
 };
 
@@ -17,24 +17,30 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const queryClient = useQueryClient();
   const [, setLocation] = useLocation();
-  const { data: user, isLoading, error } = useGetCurrentUser({
-    query: {
-      retry: false,
-    }
+  const { data: user, isLoading } = useGetCurrentUser({
+    query: { retry: false },
   });
 
   const loginMutation = useLogin();
   const registerMutation = useRegister();
   const logoutMutation = useLogout();
 
-  const handleLogin = async (data: LoginRequest) => {
-    await loginMutation.mutateAsync({ data });
+  const handleLogin = async (data: LoginRequest): Promise<User> => {
+    const result = await loginMutation.mutateAsync({ data });
     await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    const u = (result as any).user as User;
+    const redirect = u.role === "admin" ? "/admin" : u.role === "recruiter" ? "/recruiter" : "/jobs";
+    setLocation(redirect);
+    return u;
   };
 
-  const handleRegister = async (data: RegisterRequest) => {
-    await registerMutation.mutateAsync({ data });
+  const handleRegister = async (data: RegisterRequest): Promise<User> => {
+    const result = await registerMutation.mutateAsync({ data });
     await queryClient.invalidateQueries({ queryKey: ["/api/auth/me"] });
+    const u = (result as any).user as User;
+    const redirect = u.role === "recruiter" ? "/recruiter" : "/profile";
+    setLocation(redirect);
+    return u;
   };
 
   const handleLogout = async () => {

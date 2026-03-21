@@ -16,6 +16,7 @@ async function seed() {
       name: "Sarah Johnson",
       role: "recruiter",
       profileComplete: true,
+      verified: true,
     })
     .onConflictDoNothing()
     .returning();

@@ -135,6 +135,22 @@ router.post("/", async (req, res) => {
   const userId = (req.session as any)?.userId;
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
 
+  const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  if (!currentUser) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  if (currentUser.role !== "recruiter" && currentUser.role !== "admin") {
+    res.status(403).json({ error: "Forbidden", message: "Only recruiters can post jobs" });
+    return;
+  }
+
+  if (currentUser.role === "recruiter" && !currentUser.verified) {
+    res.status(403).json({
+      error: "Forbidden",
+      message: "Your recruiter account is pending verification. Please wait for admin approval before posting jobs.",
+    });
+    return;
+  }
+
   const parsed = jobInputSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: "Invalid input", message: parsed.error.message }); return; }
 
@@ -159,7 +175,7 @@ router.post("/", async (req, res) => {
     status: data.status ?? "active",
   }).returning();
 
-  res.status(201).json({ ...job, recruiterName: "", applicationsCount: 0 });
+  res.status(201).json({ ...job, recruiterName: currentUser.name, applicationsCount: 0 });
 });
 
 router.put("/:id", async (req, res) => {
@@ -168,6 +184,12 @@ router.put("/:id", async (req, res) => {
 
   const id = parseInt(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "Bad Request" }); return; }
+
+  const [currentUser] = await db.select().from(usersTable).where(eq(usersTable.id, userId));
+  if (!currentUser || (currentUser.role === "recruiter" && !currentUser.verified)) {
+    res.status(403).json({ error: "Forbidden", message: "Account not verified" });
+    return;
+  }
 
   const parsed = jobInputSchema.safeParse(req.body);
   if (!parsed.success) { res.status(400).json({ error: "Invalid input", message: parsed.error.message }); return; }

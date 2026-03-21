@@ -11,6 +11,7 @@ export const usersTable = pgTable("users", {
   name: text("name").notNull(),
   role: roleEnum("role").notNull().default("student"),
   profileComplete: boolean("profile_complete").notNull().default(false),
+  verified: boolean("verified").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

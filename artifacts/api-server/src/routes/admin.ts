@@ -21,9 +21,51 @@ router.get("/users", async (req, res) => {
     name: usersTable.name,
     role: usersTable.role,
     profileComplete: usersTable.profileComplete,
+    verified: usersTable.verified,
     createdAt: usersTable.createdAt,
   }).from(usersTable).orderBy(sql`${usersTable.createdAt} DESC`);
   res.json(users);
+});
+
+router.patch("/users/:id/verify", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Bad Request" }); return; }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+  if (user.role !== "recruiter") { res.status(400).json({ error: "Only recruiter accounts can be verified" }); return; }
+
+  const [updated] = await db.update(usersTable)
+    .set({ verified: true })
+    .where(eq(usersTable.id, id))
+    .returning();
+
+  res.json({ success: true, user: updated });
+});
+
+router.patch("/users/:id/reject", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Bad Request" }); return; }
+
+  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  if (!user) { res.status(404).json({ error: "User not found" }); return; }
+
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+  res.json({ success: true, message: "User account removed" });
+});
+
+router.delete("/users/:id", async (req, res) => {
+  if (!(await requireAdmin(req, res))) return;
+
+  const id = parseInt(req.params.id);
+  if (isNaN(id)) { res.status(400).json({ error: "Bad Request" }); return; }
+
+  await db.delete(usersTable).where(eq(usersTable.id, id));
+  res.json({ success: true, message: "User deleted" });
 });
 
 router.get("/jobs", async (req, res) => {

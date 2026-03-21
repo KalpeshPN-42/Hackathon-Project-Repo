@@ -17,6 +17,7 @@ import Applications from "./pages/student/Applications";
 import ResumeBuilder from "./pages/student/ResumeBuilder";
 import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import PostJob from "./pages/recruiter/PostJob";
+import RecruiterApplications from "./pages/recruiter/Applications";
 import AdminDashboard from "./pages/admin/Dashboard";
 
 const queryClient = new QueryClient({
@@ -49,8 +50,7 @@ function Router() {
         {/* Recruiter Routes */}
         <Route path="/recruiter" component={RecruiterDashboard} />
         <Route path="/recruiter/post-job" component={PostJob} />
-        {/* We reuse the generic applications page or implement specific if needed, generic for now */}
-        <Route path="/recruiter/applications" component={RecruiterDashboard} />
+        <Route path="/recruiter/applications" component={RecruiterApplications} />
 
         {/* Admin Routes */}
         <Route path="/admin" component={AdminDashboard} />
