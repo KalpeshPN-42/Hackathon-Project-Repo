@@ -7,6 +7,7 @@ import applicationsRouter from "./applications";
 import resumeRouter from "./resume";
 import adminRouter from "./admin";
 import recruiterRouter from "./recruiter";
+import reportsRouter from "./reports";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use("/applications", applicationsRouter);
 router.use("/resume", resumeRouter);
 router.use("/admin", adminRouter);
 router.use("/recruiter", recruiterRouter);
+router.use("/reports", reportsRouter);
 
 export default router;

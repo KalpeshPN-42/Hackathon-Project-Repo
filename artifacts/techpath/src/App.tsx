@@ -19,6 +19,7 @@ import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import PostJob from "./pages/recruiter/PostJob";
 import RecruiterApplications from "./pages/recruiter/Applications";
 import AdminDashboard from "./pages/admin/Dashboard";
+import ReportPage from "./pages/report/ReportPage";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,10 +53,11 @@ function Router() {
         <Route path="/recruiter/post-job" component={PostJob} />
         <Route path="/recruiter/applications" component={RecruiterApplications} />
 
+        {/* Shared Report Route */}
+        <Route path="/report" component={ReportPage} />
+
         {/* Admin Routes */}
         <Route path="/admin" component={AdminDashboard} />
-        <Route path="/admin/users" component={AdminDashboard} />
-        <Route path="/admin/jobs" component={AdminDashboard} />
 
         <Route component={NotFound} />
       </Switch>
